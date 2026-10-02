@@ -67,6 +67,11 @@
         SND_SOC_CS35L41_I2C = module;
         LEDS_CLASS_FLASH = yes;
         LEDS_LM3644 = module;
+        # The tree boots through DRM_SIMPLEDRM (mutually exclusive with the
+        # generic FB_SIMPLE) and keeps the upstream full-preemption model.
+        FB_SIMPLE = no;
+        PREEMPT_VOLUNTARY = no;
+        PREEMPT = yes;
       }
     )
   ];
