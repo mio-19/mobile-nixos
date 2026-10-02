@@ -80,6 +80,7 @@
     initrd = config.mobile.outputs.initrd;
     cmdline = lib.concatStringsSep " " config.boot.kernelParams;
     deviceTree = "zumapro-${config.mobile.system.android.device_name}.dtb";
+    boardName = config.mobile.system.android.device_name;
   };
 
   boot.kernelParams = [

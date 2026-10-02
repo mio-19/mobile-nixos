@@ -7,6 +7,7 @@
   initrd,
   cmdline,
   deviceTree,
+  boardName,
 }:
 
 let
@@ -56,7 +57,7 @@ stdenv.mkDerivation {
     cp ${initrd} blob/ramdisk
     chmod +w blob/dtb
     fdtput -t s blob/dtb /chosen bootargs ${lib.escapeShellArg cmdline}
-    make $makeFlags komodo_defconfig
+    make $makeFlags ${boardName}_defconfig
     runHook postConfigure
   '';
 

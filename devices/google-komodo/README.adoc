@@ -3,7 +3,7 @@ include::_support/common.inc[]
 
 == Device-specific notes
 
-=== Experimental support
+=== Best-effort support
 
 This is a best-effort port based on the
 https://wiki.nura.eco/wiki/Google_Pixel_9_Pro_XL_(google-komodo)[Nura device page]
