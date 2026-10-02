@@ -1,0 +1,76 @@
+= Google Pixel 9 Pro
+include::_support/common.inc[]
+
+== Device-specific notes
+
+=== Best-effort support
+
+This is a best-effort port built on the same work as the
+<<google-komodo.adoc#,Pixel 9 Pro XL (`google-komodo`)>> device and the
+work-in-progress
+https://github.com/Trijal08/kernel-mainline/tree/zumapro-google-caimito[Pixel 9 series kernel].
+There is no upstream Nura page for `caiman`; it is included here because the
+pinned tree carries a `zumapro-caiman` device tree. It has not been tested on
+hardware with Mobile NixOS.
+
+The device uses Google Tensor G4 (`zumapro`), 16 GiB of RAM and a
+1280 by 2856 display. It shares the `google-zumapro` family with the
+Pixel 9 Pro XL, and differs mainly in the panel driver and board identity.
+
+The kernel configuration enables, as far as the pinned tree allows, the
+on-SoC Exynos DECON display controller and the Google `caiman` panel, the
+Panthor (Mali-G715) GPU driver, the Trusty/GSA AoC stack and its USF sensor
+bridge, the AoC-backed Synaptics touchscreen and wake gestures, USB 3 gadget
+support, the MAX77779/S2MPG PMIC and battery stack, the BCM4390 Wi-Fi and
+Bluetooth transport, and the Cirrus CS35L41 speaker amplifiers. Several of
+these need firmware and/or calibration that only ships in the stock
+installation, so expect them to stay inert until that firmware is provided.
+
+=== Boot images
+
+The stock bootloader uses Android boot image header version 4. The image embeds
+the mainline kernel, the `zumapro-caiman.dtb` device tree and the Mobile NixOS
+initrd in https://github.com/Trijal08/uniLoader[uniLoader], which provides the
+boot environment expected by the kernel.
+
+Build an image for initial testing with:
+
+----
+$ nix-build examples/hello --argstr device google-caiman -A outputs.android-bootimg
+----
+
+[WARNING]
+====
+Unlocking the bootloader wipes all user data. Back up your data first and keep
+the https://developers.google.com/android/images#caiman[Google factory images]
+available for recovery. Do not relock the bootloader while using custom images.
+====
+
+Enable OEM unlocking and USB debugging in Android's developer options.
+Use `adb reboot bootloader`, or hold Volume Down and Power from a powered-off
+device, to enter fastboot mode. Unlock with `fastboot flashing unlock` and
+confirm on the phone.
+
+Prefer temporary booting, if supported by the installed bootloader:
+
+----
+$ fastboot boot result
+----
+
+The default output also contains a root filesystem image. This port targets
+`userdata`, not Android's dynamic `system` partition. Installing that image
+destroys Android user data and is not a supported dual-boot setup. Persistent
+installation, A/B slot handling and interactions with the stock `vendor_boot`,
+`init_boot`, `dtbo` and verified-boot partitions still require hardware testing.
+Do not run the generated flashing script before validating the boot image.
+
+=== Firmware
+
+The shared `google-zumapro` firmware derivation bundles the redistributable
+Cirrus, Broadcom and Exynos trees from `linux-firmware`, and it is included in
+both the system and the initrd. The Google-specific blobs do not ship there and
+are not redistributable: the CS35L41 `caiman` speaker tuning, the BCM4390
+NVRAM/Wi-Fi firmware and the AoC/Trusty firmware must be extracted from the
+matching stock installation and overlaid on top.
+
+See the `google-komodo` notes for the same firmware caveats.

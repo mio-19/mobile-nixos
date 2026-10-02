@@ -6,6 +6,7 @@
   kernel,
   initrd,
   cmdline,
+  deviceTree,
 }:
 
 let
@@ -17,7 +18,7 @@ let
   };
 in
 stdenv.mkDerivation {
-  pname = "mobile-nixos-google-komodo-boot.img";
+  pname = "mobile-nixos-google-zumapro-boot.img";
   version = "2026-08-29";
 
   src = fetchFromGitHub {
@@ -51,7 +52,7 @@ stdenv.mkDerivation {
   configurePhase = ''
     runHook preConfigure
     cp ${kernel}/${kernel.target} blob/Image
-    cp ${kernel}/dtbs/exynos/google/zumapro-komodo.dtb blob/dtb
+    cp ${kernel}/dtbs/exynos/google/${deviceTree} blob/dtb
     cp ${initrd} blob/ramdisk
     chmod +w blob/dtb
     fdtput -t s blob/dtb /chosen bootargs ${lib.escapeShellArg cmdline}

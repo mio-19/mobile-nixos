@@ -14,6 +14,9 @@ The Nura feature matrix describes that port, not verified Mobile NixOS support.
 In particular, do not rely on cellular calls, cameras, GPS or complete Bluetooth
 and GPU support.
 
+The closely related <<google-caiman.adoc#,Pixel 9 Pro (`google-caiman`)>>
+shares the `google-zumapro` family and its kernel/firmware support.
+
 The device uses Google Tensor G4 (`zumapro`), 16 GiB of RAM and a
 1344 by 2992 display. Only the Pixel 9 Pro XL (`komodo`) is covered by this port;
 the other Pixel 9 models require their own device trees.

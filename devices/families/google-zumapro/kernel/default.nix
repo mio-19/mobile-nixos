@@ -1,12 +1,13 @@
 {
   mobile-nixos,
   fetchFromGitHub,
+  configfile,
   ...
 }:
 
 mobile-nixos.kernel-builder {
   version = "7.3.0-rc5";
-  configfile = ./config.aarch64;
+  inherit configfile;
 
   src = fetchFromGitHub {
     owner = "Trijal08";
