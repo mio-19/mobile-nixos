@@ -13,7 +13,9 @@ let
 
   cmdline = concatStringsSep " " config.boot.kernelParams;
 
-  android-bootimg = pkgs.callPackage ./bootimg.nix rec {
+  android-bootimg = config.mobile.outputs.android.android-bootimg;
+
+  default-android-bootimg = pkgs.callPackage ./bootimg.nix rec {
     inherit (config.mobile.system.android) bootimg;
     inherit cmdline;
     inherit (config.mobile.outputs) initrd;
@@ -206,8 +208,8 @@ in
       mobile.outputs = {
         default = android-fastboot-images;
         android = {
+          android-bootimg = lib.mkDefault default-android-bootimg;
           inherit
-            android-bootimg
             android-recovery
             android-fastboot-images
           ;

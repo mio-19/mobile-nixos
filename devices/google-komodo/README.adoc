@@ -1,0 +1,83 @@
+= Google Pixel 9 Pro XL
+include::_support/common.inc[]
+
+== Device-specific notes
+
+=== Experimental support
+
+This is a best-effort port based on the
+https://wiki.nura.eco/wiki/Google_Pixel_9_Pro_XL_(google-komodo)[Nura device page]
+and the work-in-progress
+https://github.com/Trijal08/kernel-mainline/tree/zumapro-google-caimito[Pixel 9 series kernel].
+It has not been tested on hardware with Mobile NixOS.
+The Nura feature matrix describes that port, not verified Mobile NixOS support.
+In particular, do not rely on cellular calls, cameras, GPS or complete Bluetooth
+and GPU support.
+
+The device uses Google Tensor G4 (`zumapro`), 16 GiB of RAM and a
+1344 by 2992 display. Only the Pixel 9 Pro XL (`komodo`) is covered by this port;
+the other Pixel 9 models require their own device trees.
+
+The kernel and its configuration enable, as far as the pinned tree allows, the
+on-SoC Exynos DECON display controller and the Google `komodo` panel, the
+Panthor (Mali-G715) GPU driver, the Trusty/GSA AoC stack and its USF sensor
+bridge, the AoC-backed Synaptics touchscreen and wake gestures, USB 3 gadget
+support, the MAX77779/S2MPG PMIC and battery stack, the BCM4390 Wi-Fi and
+Bluetooth transport, and the Cirrus CS35L41 speaker amplifiers. Several of
+these need firmware and/or calibration that only ships in the stock
+installation, so expect them to stay inert until that firmware is provided.
+
+=== Boot images
+
+The stock bootloader uses Android boot image header version 4.
+The image embeds the mainline kernel, the `zumapro-komodo.dtb` device tree and
+the Mobile NixOS initrd in
+https://github.com/Trijal08/uniLoader[uniLoader], which provides the boot
+environment expected by the kernel. The legacy Android image builder and
+appended Qualcomm device trees are not used.
+
+Build an image for initial testing with:
+
+----
+$ nix-build examples/hello --argstr device google-komodo -A outputs.android-bootimg
+----
+
+[WARNING]
+====
+Unlocking the bootloader wipes all user data. Back up your data first and keep
+the https://developers.google.com/android/images#komodo[Google factory images]
+available for recovery. Do not relock the bootloader while using custom images.
+====
+
+Enable OEM unlocking and USB debugging in Android's developer options.
+Use `adb reboot bootloader`, or hold Volume Down and Power from a powered-off
+device, to enter fastboot mode. Unlock with `fastboot flashing unlock` and
+confirm on the phone.
+
+Prefer temporary booting, if supported by the installed bootloader:
+
+----
+$ fastboot boot result
+----
+
+The default output also contains a root filesystem image. This port targets
+`userdata`, not Android's dynamic `system` partition. Installing that image
+destroys Android user data and is not a supported dual-boot setup. Persistent
+installation, A/B slot handling and interactions with the stock `vendor_boot`,
+`init_boot`, `dtbo` and verified-boot partitions still require hardware testing.
+Do not run the generated flashing script before validating the boot image.
+
+=== Firmware
+
+`mobile.device.firmware` bundles the redistributable kernel firmware the device
+can use (the Cirrus, Broadcom and Exynos trees from `linux-firmware`), and it is
+included in both the system and the initrd. The Google-specific blobs do not
+ship there and are not redistributable: the CS35L41 `komodo` speaker tuning,
+the BCM4390 NVRAM/Wi-Fi firmware and the AoC/Trusty firmware must be extracted
+from the matching stock installation.
+
+`./firmware` is the starting point for that. It is a plain derivation you can
+override, for example with `overrideAttrs` or by copying it into a local
+private package, to add `lib/firmware/{cirrus,brcm,exynos}` files taken from the
+stock image. Overlaying them is enough for the kernel to find them; consult the
+pinned kernel's firmware requests for the expected filenames.

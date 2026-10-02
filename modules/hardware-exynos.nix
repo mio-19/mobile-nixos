@@ -5,6 +5,7 @@ let
   cfg = config.mobile.hardware.socs;
   anyExynos = lib.any (v: v) [
     cfg.exynos-7880.enable
+    cfg.google-tensor-g4.enable
   ];
 in
 {
@@ -14,6 +15,11 @@ in
       default = false;
       description = "enable when SOC is Exynos 7880";
     };
+    hardware.socs.google-tensor-g4.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable when SOC is Google Tensor G4 (zumapro)";
+    };
   };
 
   config = mkMerge [
@@ -22,6 +28,9 @@ in
         system.system = "aarch64-linux";
         quirks.fb-refresher.enable = true;
       };
+    }
+    {
+      mobile.system.system = mkIf cfg.google-tensor-g4.enable "aarch64-linux";
     }
     (mkIf anyExynos {
       mobile.kernel.structuredConfig = [
