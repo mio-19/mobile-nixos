@@ -14,6 +14,7 @@
   ./hardware-eink.nix
   ./generated-disk-images.nix
   ./generated-filesystems.nix
+  ./generated-luks.nix
   ./hardware-allwinner.nix
   ./hardware-exynos.nix
   ./hardware-generic.nix

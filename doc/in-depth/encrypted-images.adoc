@@ -1,0 +1,85 @@
+= LUKS encrypted images
+include::_support/common.inc[]
+
+== Overview
+
+The installer is able to create a LUKS encrypted root filesystem on-device.
+For build-time images, Mobile NixOS can encrypt the generated root filesystem
+image during the build instead.
+
+This is useful for Android-based devices, where the default output is a disk
+image, and where there is no easy way to run the installer.
+
+`mobile.rootfs.luks.enable` produces an encrypted copy of the generated
+`rootfs` image using a *known* passphrase:
+
+[source,nix]
+----
+{
+  mobile.rootfs.luks.enable = true;
+  mobile.rootfs.luks.passphrase = "1234";
+}
+----
+
+[WARNING]
+====
+The passphrase is embedded in the world-readable Nix store and in build logs.
+It is not a way to keep a secret. It exists so the image can be booted and the
+passphrase changed on-device afterwards, for example:
+
+[source,shell]
+----
+cryptsetup luksChangeKey /dev/disk/by-uuid/44444444-4444-4444-8888-888888888888
+----
+====
+
+== How it works
+
+The root filesystem image is built as usual. Then, space is appended to the
+image (32 MiB by default) and the image is re-encrypted in place with
+`cryptsetup reencrypt --encrypt`.
+
+This does not require a device mapper device or root privileges, so it works
+hermetically inside the Nix build sandbox. The source filesystem grows into the
+space that the LUKS header will occupy, which is why the appended slack space
+must be large enough.
+
+All options live under `mobile.rootfs.luks`:
+
+`mobile.rootfs.luks.enable`:: Whether to encrypt the generated rootfs image.
+
+`mobile.rootfs.luks.passphrase`:: The build-time passphrase. Defaults to the
+well-known `1234`.
+
+`mobile.rootfs.luks.uuid`:: The LUKS container UUID. Defaults to the same value
+the root filesystem uses, so existing `fileSystems` and
+`boot.initrd.luks.devices` definitions keep matching.
+
+`mobile.rootfs.luks.slackSpace`:: Space appended to the image, in MiB.
+
+== Booting the image
+
+Enabling encryption also sets a default `boot.initrd.luks.devices` entry (by
+UUID). Point the root filesystem at the opened mapper device:
+
+[source,nix]
+----
+{
+  fileSystems."/".device = "/dev/mapper/LUKS-MOBILE-ROOTFS";
+}
+----
+
+The stage-1 boot GUI is required to prompt for the passphrase; see
+<<../stage-1.adoc#,Stage-1>> and `mobile.boot.stage-1.bootlog`.
+
+== Try it
+
+An encrypted variant of the `hello` example is provided:
+
+[source,shell]
+----
+nix-build examples/hello-encrypted --argstr device <device>
+----
+
+It uses the passphrase `1234` and points the root filesystem at the opened
+mapper device. See `examples/hello-encrypted/default.nix`.

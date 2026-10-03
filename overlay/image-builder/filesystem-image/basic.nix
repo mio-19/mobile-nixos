@@ -1,17 +1,22 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
     mkOption
     optionalString
     types
-  ;
+    ;
 
   inherit (config)
     computeMinimalSize
     extraPadding
     size
-  ;
+    ;
 in
 {
   options = {
@@ -117,14 +122,14 @@ in
     };
 
     populateCommands = lib.mkOption {
-      type = types.lines;                  
+      type = types.lines;
       default = "";
       description = ''
         Commands used to fill the filesystem.
 
         `$PWD` is the root of the filesystem.
       '';
-    };                                       
+    };
 
     buildInputs = mkOption {
       type = with types; listOf package;
@@ -169,6 +174,47 @@ in
       '';
     };
 
+    encrypt = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Encrypt the resulting filesystem image with LUKS.
+
+        The image is built as usual, then re-encrypted in place with
+        `cryptsetup reencrypt --encrypt` using the *known* passphrase in
+        `encryptPassphrase`. Space is appended so the LUKS header does not
+        overlap the filesystem.
+
+        This is convenience tooling for generated images, not a way to keep a
+        secret: the passphrase ends up in the world-readable Nix store. Change
+        the passphrase on the device after the first boot.
+      '';
+    };
+
+    encryptPassphrase = mkOption {
+      type = types.str;
+      default = "1234";
+      description = ''
+        The build-time passphrase for `encrypt`, embedded in the store.
+      '';
+    };
+
+    encryptSlackSpace = mkOption {
+      type = types.int;
+      default = 32;
+      description = ''
+        Space, in MiB, appended to the image to hold the LUKS header.
+      '';
+    };
+
+    encryptUUID = mkOption {
+      type = types.nullOr config.helpers.types.uuid;
+      default = null;
+      description = ''
+        UUID assigned to the LUKS container when `encrypt` is enabled.
+      '';
+    };
+
     imagePath = mkOption {
       type = types.path;
       default = "${config.output}${config.location}";
@@ -191,9 +237,12 @@ in
   config = {
     buildInputs = [
     ];
-    nativeBuildInputs = with pkgs.buildPackages; [
-      libfaketime
-    ];
+    nativeBuildInputs =
+      with pkgs.buildPackages;
+      [
+        libfaketime
+      ]
+      ++ lib.optional config.encrypt pkgs.buildPackages.cryptsetup;
     buildPhasesOrder = [
       # Copy the files to be copied into the target filesystem image first in
       # the `pwd` during this phase.
@@ -215,6 +264,9 @@ in
 
       # Commands where a filesystem check should be ran.
       "checkPhase"
+
+      # Re-encrypt the built image when requested.
+      "encryptPhase"
 
       # Any other extra business to run, normally left to the consumer.
       "additionalCommandsPhase"
@@ -263,6 +315,25 @@ in
       '';
 
       "additionalCommandsPhase" = config.additionalCommands;
+
+      "encryptPhase" = lib.optionalString config.encrypt ''
+        header "Encrypting image"
+
+        slack=$(( ${toString config.encryptSlackSpace} * 1024 * 1024 ))
+
+        # Append slack so the LUKS header has somewhere to live without
+        # overlapping the filesystem, then re-encrypt in place.
+        truncate -s +$slack "$img"
+        echo -n ${lib.escapeShellArg config.encryptPassphrase} | \
+          cryptsetup --disable-locks \
+            reencrypt \
+            --encrypt \
+            --batch-mode \
+            --reduce-device-size "$slack" \
+            ${lib.optionalString (config.encryptUUID != null) "--uuid=${config.encryptUUID}"} \
+            "$img"
+        cryptsetup --disable-locks isLuks "$img"
+      '';
     };
 
     builderFunctions = ''

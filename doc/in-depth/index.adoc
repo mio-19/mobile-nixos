@@ -11,6 +11,10 @@ Index of in-depth topics.
 
 * <<stage-1.adoc#,Stage-1>>
 
+== System Images
+
+* <<encrypted-images.adoc#,LUKS encrypted images>>
+
 == Project Organization
 
 * <<devices.adoc#,Devices>>
