@@ -5,14 +5,9 @@ import ../../lib/eval-with-configuration.nix (
   args
   // {
     configuration = [
-      ({ config, lib, ... }: {
+      ({ ... }: {
         imports = [ ../hello/configuration.nix ];
         mobile.rootfs.luks.enable = true;
-        fileSystems."/" = {
-          device = "/dev/mapper/LUKS-MOBILE-ROOTFS";
-          fsType = "ext4";
-          autoResize = false;
-        };
       })
     ];
     additionalHelpInstructions = { device }: ''

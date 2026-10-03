@@ -60,14 +60,8 @@ the root filesystem uses, so existing `fileSystems` and
 == Booting the image
 
 Enabling encryption also sets a default `boot.initrd.luks.devices` entry (by
-UUID). Point the root filesystem at the opened mapper device:
-
-[source,nix]
-----
-{
-  fileSystems."/".device = "/dev/mapper/LUKS-MOBILE-ROOTFS";
-}
-----
+UUID) and points `fileSystems."/"` at the opened mapper device. Both are
+overridable: a normal definition of either option wins.
 
 The stage-1 boot GUI is required to prompt for the passphrase; see
 <<../stage-1.adoc#,Stage-1>> and `mobile.boot.stage-1.bootlog`.
@@ -81,5 +75,5 @@ An encrypted variant of the `hello` example is provided:
 nix-build examples/hello-encrypted --argstr device <device>
 ----
 
-It uses the passphrase `1234` and points the root filesystem at the opened
-mapper device. See `examples/hello-encrypted/default.nix`.
+It uses the passphrase `1234`; the root filesystem and LUKS unlock are wired
+up automatically. See `examples/hello-encrypted/default.nix`.

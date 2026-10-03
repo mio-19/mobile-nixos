@@ -98,5 +98,16 @@ in
         device = "/dev/disk/by-uuid/${cfg.uuid}";
       };
     };
+
+    # Point the root filesystem at the opened mapper. The whole entry is
+    # overridden because overriding only `device` does not merge with the
+    # `fileSystems` submodule defaults (`fsType` would be left undefined).
+    # Priority 900 wins over the rootfs module's `mkDefault` (1000), but a
+    # normal user definition still wins over this.
+    fileSystems."/" = lib.mkOverride 900 {
+      device = "/dev/mapper/LUKS-MOBILE-ROOTFS";
+      fsType = "ext4";
+      autoResize = true;
+    };
   };
 }
