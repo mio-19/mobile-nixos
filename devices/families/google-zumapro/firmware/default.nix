@@ -7,7 +7,8 @@
 # Redistributable firmware from the shared linux-firmware bundle that the
 # Pixel 9 (Tensor G4 / zumapro) boards can use (Cirrus speaker amps, Broadcom
 # connectivity). The board-specific tuning blobs (e.g. the `komodo`/`caiman`
-# CS35L41 tunings, the BCM4390 NVRAM and the AoC firmware) ship only in the
+# CS35L41 tunings, the BCM4390 NVRAM, the AoC firmware, the
+# google/usf sensor registry and google/s5400 modem image) ship only in the
 # stock installation and are not redistributable; extract those and overlay
 # them on top of this derivation.
 runCommand "google-zumapro-firmware" { } ''

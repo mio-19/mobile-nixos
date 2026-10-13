@@ -53,10 +53,16 @@
         AOC_USF_IIO = module;
         INPUT_AOC_GESTURE_WAKE = module;
         TOUCHSCREEN_TBN = module;
-        # BCM4390 connectivity is owned by the AoC; the Bluetooth transport
-        # lives in the kernel even though Wi-Fi uses the downstream bcmdhd.
+        # The enabled Bluetooth node is the BCM4390 HCI UART (brcm,bcm4390-bt).
+        # The AoC Bluetooth node is disabled in the pinned tree; hci_aoc stays
+        # available for that path. Wi-Fi is the downstream bcmdhd driver.
+        BT_HCIUART_BCM = yes;
         BT_HCIAOC = module;
         BCMDHD_BCM4390 = module;
+        # ST54L NFC on hsi2c_9, shared by the zumapro boards.
+        NFC = yes;
+        NFC_NCI = module;
+        NFC_ST_NCI_I2C = module;
         # Torch/flash LED.
         LEDS_CLASS_FLASH = yes;
         LEDS_LM3644 = module;

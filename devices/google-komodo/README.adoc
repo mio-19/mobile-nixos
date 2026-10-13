@@ -25,8 +25,10 @@ The kernel and its configuration enable, as far as the pinned tree allows, the
 on-SoC Exynos DECON display controller and the Google `komodo` panel, the
 Panthor (Mali-G715) GPU driver, the Trusty/GSA AoC stack and its USF sensor
 bridge, the AoC-backed Synaptics touchscreen and wake gestures, USB 3 gadget
-support, the MAX77779/S2MPG PMIC and battery stack, the BCM4390 Wi-Fi and
-Bluetooth transport, and the Cirrus CS35L41 speaker amplifiers. Several of
+support, the MAX77779 charger and fuel gauge, the BCM4390 Wi-Fi and
+Bluetooth transport, and the Cirrus CS35L41 speaker amplifiers. The
+S2MPG14/S2MPG15 PMICs are described in the device tree, but this kernel
+commit has no driver for them. Several of
 these need firmware and/or calibration that only ships in the stock
 installation, so expect them to stay inert until that firmware is provided.
 
@@ -75,12 +77,16 @@ Do not run the generated flashing script before validating the boot image.
 `mobile.device.firmware` bundles the redistributable kernel firmware the device
 can use (the Cirrus, Broadcom and Exynos trees from `linux-firmware`), and it is
 included in both the system and the initrd. The Google-specific blobs do not
-ship there and are not redistributable: the CS35L41 `komodo` speaker tuning,
-the BCM4390 NVRAM/Wi-Fi firmware and the AoC/Trusty firmware must be extracted
-from the matching stock installation.
+ship there and are not redistributable. The pinned device tree asks for:
+
+* `cirrus/cs35l41-dsp1-spk-prot-komodo.wmfw`, and the same stem with `-r`
+  appended for the right-hand amplifier
+* `google/usf/komodo/` sensor registry scripts named on the AoC node
+* `google/s5400/modem/images/default/modem.bin`
+* the BCM4390 NVRAM and Wi-Fi firmware requested by `bcmdhd`, plus the
+  AoC/Trusty firmware
 
 `./firmware` is the starting point for that. It is a plain derivation you can
 override, for example with `overrideAttrs` or by copying it into a local
-private package, to add `lib/firmware/{cirrus,brcm,exynos}` files taken from the
-stock image. Overlaying them is enough for the kernel to find them; consult the
-pinned kernel's firmware requests for the expected filenames.
+private package, and place those files under `lib/firmware/`. Overlaying them
+is enough for the kernel to find them.

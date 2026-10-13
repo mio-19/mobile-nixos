@@ -20,6 +20,7 @@
     (
       helpers: with helpers; {
         DRM_PANEL_GOOGLE_CAIMAN = yes;
+        DRM_PANEL_GOOGLE_KOMODO = no;
       }
     )
   ];
