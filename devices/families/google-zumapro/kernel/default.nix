@@ -1,13 +1,14 @@
 {
   mobile-nixos,
   fetchFromGitHub,
-  configfile,
   ...
 }:
 
 mobile-nixos.kernel-builder {
   version = "7.3.0-rc5";
-  inherit configfile;
+  # Shared by the Pixel 9 Pro (caiman) and Pixel 9 Pro XL (komodo). The
+  # board device tree selects the panel; both panel drivers are enabled.
+  configfile = ./config.aarch64;
 
   src = fetchFromGitHub {
     owner = "Trijal08";

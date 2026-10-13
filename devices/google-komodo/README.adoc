@@ -15,14 +15,15 @@ In particular, do not rely on cellular calls, cameras, GPS or complete Bluetooth
 and GPU support.
 
 The closely related <<google-caiman.adoc#,Pixel 9 Pro (`google-caiman`)>>
-shares the `google-zumapro` family and its kernel/firmware support.
+shares the `google-zumapro` family: the same kernel package and configuration,
+firmware, and boot image builder. The device tree selects this board's panel.
 
 The device uses Google Tensor G4 (`zumapro`), 16 GiB of RAM and a
-1344 by 2992 display. Only the Pixel 9 Pro XL (`komodo`) is covered by this port;
-the other Pixel 9 models require their own device trees.
+1344 by 2992 display.
 
-The kernel and its configuration enable, as far as the pinned tree allows, the
-on-SoC Exynos DECON display controller and the Google `komodo` panel, the
+The shared kernel configuration enables, as far as the pinned tree allows, the
+on-SoC Exynos DECON display controller and both the Google `komodo` and
+`caiman` panel drivers, the
 Panthor (Mali-G715) GPU driver, the Trusty/GSA AoC stack and its USF sensor
 bridge, the AoC-backed Synaptics touchscreen and wake gestures, USB 3 gadget
 support, the MAX77779 charger and fuel gauge, the BCM4390 Wi-Fi and

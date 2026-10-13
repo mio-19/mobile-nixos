@@ -20,9 +20,7 @@
   mobile.boot.stage-1 = {
     compression = "gzip";
     kernel = {
-      package = pkgs.callPackage ./kernel {
-        configfile = (../..) + "/${config.mobile.device.name}/kernel/config.aarch64";
-      };
+      package = pkgs.callPackage ./kernel { };
       modular = true;
       allowMissingModules = false;
       modules = [
@@ -45,6 +43,10 @@
         DRM_EXYNOS = yes;
         DRM_EXYNOS9_DECON = yes;
         DRM_PANTHOR = yes;
+        # One kernel config for both boards. Each device tree binds only its
+        # own panel compatible (google,komodo-panel or google,caiman-panel).
+        DRM_PANEL_GOOGLE_KOMODO = yes;
+        DRM_PANEL_GOOGLE_CAIMAN = yes;
         TEE = yes;
         TRUSTY = module;
         GOOGLE_AOC = module;

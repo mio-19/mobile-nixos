@@ -14,11 +14,14 @@ pinned tree carries a `zumapro-caiman` device tree. It has not been tested on
 hardware with Mobile NixOS.
 
 The device uses Google Tensor G4 (`zumapro`), 16 GiB of RAM and a
-1280 by 2856 display. It shares the `google-zumapro` family with the
-Pixel 9 Pro XL, and differs mainly in the panel driver and board identity.
+1280 by 2856 display. It shares the `google-zumapro` kernel package,
+kernel configuration, firmware and boot image builder with the Pixel 9 Pro XL.
+This board differs in screen size and in the `zumapro-caiman` device tree,
+which selects the `caiman` panel.
 
-The kernel configuration enables, as far as the pinned tree allows, the
-on-SoC Exynos DECON display controller and the Google `caiman` panel, the
+The shared kernel configuration enables, as far as the pinned tree allows, the
+on-SoC Exynos DECON display controller and both the Google `caiman` and
+`komodo` panel drivers, the
 Panthor (Mali-G715) GPU driver, the Trusty/GSA AoC stack and its USF sensor
 bridge, the AoC-backed Synaptics touchscreen and wake gestures, USB 3 gadget
 support, the MAX77779 charger and fuel gauge, the BCM4390 Wi-Fi and

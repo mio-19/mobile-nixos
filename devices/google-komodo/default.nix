@@ -16,13 +16,5 @@
     height = 2992;
   };
 
-  mobile.kernel.structuredConfig = [
-    (
-      helpers: with helpers; {
-        DRM_PANEL_GOOGLE_KOMODO = yes;
-      }
-    )
-  ];
-
   mobile.system.android.device_name = "komodo";
 }

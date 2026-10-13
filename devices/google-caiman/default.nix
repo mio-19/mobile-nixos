@@ -16,14 +16,5 @@
     height = 2856;
   };
 
-  mobile.kernel.structuredConfig = [
-    (
-      helpers: with helpers; {
-        DRM_PANEL_GOOGLE_CAIMAN = yes;
-        DRM_PANEL_GOOGLE_KOMODO = no;
-      }
-    )
-  ];
-
   mobile.system.android.device_name = "caiman";
 }
