@@ -16,6 +16,40 @@
        labeled `nixos_root` for Mobile NixOS's ZFS storage pool.
      - Android's data remains untouched on Slot A.
 
+  SETTING UP THE PARTITION LAYOUT FROM DEFAULT ANDROID:
+  -----------------------------------------------------
+  Stock Android uses a GPT layout on UFS storage (/dev/block/by-name/):
+  - Slotted boot partitions: boot_a/boot_b, init_boot_a/init_boot_b, vendor_boot_a/vendor_boot_b, dtbo_a/dtbo_b
+  - Shared dynamic container: `super` (holds system_a/b, vendor_a/b, product_a/b)
+  - Shared user data: `userdata` (occupies almost all remaining disk space)
+
+  METHOD A: Resizing `userdata` with parted (Recommended for 32GB+ installations)
+  1. Boot into a recovery environment with root shell / ADB (or temporary TWRP/initramfs):
+     $ adb reboot recovery
+  2. Unmount userdata if mounted:
+     # umount /data /dev/block/by-name/userdata 2>/dev/null || true
+  3. Check and shrink the filesystem (e2fsck + resize2fs for ext4, or backup/restore for f2fs):
+     # e2fsck -fy /dev/block/by-name/userdata
+     # resize2fs /dev/block/by-name/userdata 64G  (e.g., shrink to 64GB)
+  4. Inspect the partition table on the UFS LUN containing userdata (typically /dev/block/sda):
+     # parted /dev/block/sda print
+     Note the partition number of `userdata` (e.g. 52) and its start sector.
+  5. Shrink the `userdata` partition boundary to match the resized filesystem:
+     # parted /dev/block/sda resizepart 52 <start_sector + 64GB in sectors>
+  6. Create a new partition in the newly unallocated space:
+     # parted /dev/block/sda mkpart nixos_root ext4 <end_of_userdata_sector> 100%
+  7. Label the new partition:
+     # parted /dev/block/sda name <new_part_num> nixos_root
+  8. Inform the kernel:
+     # partprobe /dev/block/sda
+
+  METHOD B: Carving a logical partition inside `super` via fastbootd
+  If your `super` partition has unallocated space, or if you delete unused slot-B dynamic partitions:
+  1. Reboot to fastbootd:
+     $ fastboot reboot fastboot
+  2. Create a new logical partition inside super:
+     $ fastboot create-logical-partition nixos_root 17179869184  (16 GiB)
+
   3. ZFS Pool & Native Dataset-Level Encryption:
      - The root and nix store datasets (`zroot/root`, `zroot/nix`) reside in the pool.
      - The user's home directory (`zroot/home/<username>`) is formatted with
