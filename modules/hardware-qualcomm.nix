@@ -7,7 +7,7 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
   cfg = config.mobile.hardware.socs;
   anyQualcomm = lib.any (v: v) [
     cfg.qualcomm-msm8940.enable
@@ -142,10 +142,12 @@ in
     }
     (mkIf anyQualcomm {
       mobile.kernel.structuredConfig = [
-        (helpers: with helpers; {
-          ARCH_QCOM = lib.mkDefault (whenAtLeast "4.1" yes);
-          ARCH_MSM = lib.mkDefault (whenOlder "4.1" yes);
-        })
+        (
+          helpers: with helpers; {
+            ARCH_QCOM = lib.mkDefault (whenAtLeast "4.1" yes);
+            ARCH_MSM = lib.mkDefault (whenOlder "4.1" yes);
+          }
+        )
       ];
     })
   ];

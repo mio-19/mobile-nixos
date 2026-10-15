@@ -1,10 +1,19 @@
-{ stdenv, lib, fetchFromGitHub, qrtr, xz }:
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  qrtr,
+  xz,
+}:
 
 stdenv.mkDerivation {
   pname = "pd-mapper";
   version = "unstable-2024-06-19";
 
-  buildInputs = [ qrtr xz ];
+  buildInputs = [
+    qrtr
+    xz
+  ];
 
   src = fetchFromGitHub {
     owner = "linux-msm";

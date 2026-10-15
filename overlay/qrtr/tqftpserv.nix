@@ -1,4 +1,13 @@
-{ stdenv, lib, fetchFromGitHub, qrtr, zstd, meson, ninja, pkg-config }:
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  qrtr,
+  zstd,
+  meson,
+  ninja,
+  pkg-config,
+}:
 
 stdenv.mkDerivation {
   pname = "tqftpserv";
@@ -11,8 +20,15 @@ stdenv.mkDerivation {
     hash = "sha256-KKjEwl6qviDFqhDBU39ug3QBmRtwztHyBWgzvC7GI2w=";
   };
 
-  nativeBuildInputs = [ meson ninja pkg-config ];
-  buildInputs = [ qrtr zstd ];
+  nativeBuildInputs = [
+    meson
+    ninja
+    pkg-config
+  ];
+  buildInputs = [
+    qrtr
+    zstd
+  ];
   buildSystem = "meson";
 
   patches = [

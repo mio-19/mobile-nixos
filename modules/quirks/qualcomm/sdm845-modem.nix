@@ -1,4 +1,10 @@
-{ config, lib, pkgs, options, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  options,
+  ...
+}:
 
 let
   cfg = config.mobile.quirks.qualcomm;
@@ -9,7 +15,7 @@ let
     mkOption
     optional
     types
-  ;
+    ;
   anyCompatible = any id [
     cfg.sdm845-modem.enable
     cfg.sc7180-modem.enable
@@ -63,38 +69,43 @@ in
     environment.pathsToLink = [ "/share/uncompressed-firmware" ];
     # This package added to the environment will select a few firmware path to keep uncompressed.
     environment.systemPackages = [
-      (pkgs.callPackage (
-        { lib
-        , runCommand
-        , buildEnv
-        , firmwareFilesList
-        }:
+      (pkgs.callPackage
+        (
+          {
+            lib,
+            runCommand,
+            buildEnv,
+            firmwareFilesList,
+          }:
 
-        runCommand "qcom-modem-uncompressed-firmware-share" {
-          firmwareFiles = buildEnv {
-            name = "qcom-modem-uncompressed-firmware";
-            paths = firmwareFilesList;
-            pathsToLink = [
-              "/lib/firmware/rmtfs"
-            ]
-              ++ optional cfg.sdm845-modem.enable "/lib/firmware/qcom/sdm845"
-              ++ optional cfg.sc7180-modem.enable "/lib/firmware/qcom/sc7180-trogdor"
-              ++ optional cfg.sm7325-modem.enable "/lib/firmware/qcom/sm7325"
-            ;
-          };
-        } ''
-          PS4=" $ "
-          (
-          set -x
-          mkdir -p $out/share/
-          ln -s $firmwareFiles/lib/firmware/ $out/share/uncompressed-firmware
-          )
-        ''
-      ) {
-        # We have to borrow the pre `apply`'d list, thus `options...definitions`.
-        # This is because the firmware is compressed in `apply` on `hardware.firmware`.
-        firmwareFilesList = lib.flatten options.hardware.firmware.definitions;
-      })
+          runCommand "qcom-modem-uncompressed-firmware-share"
+            {
+              firmwareFiles = buildEnv {
+                name = "qcom-modem-uncompressed-firmware";
+                paths = firmwareFilesList;
+                pathsToLink = [
+                  "/lib/firmware/rmtfs"
+                ]
+                ++ optional cfg.sdm845-modem.enable "/lib/firmware/qcom/sdm845"
+                ++ optional cfg.sc7180-modem.enable "/lib/firmware/qcom/sc7180-trogdor"
+                ++ optional cfg.sm7325-modem.enable "/lib/firmware/qcom/sm7325";
+              };
+            }
+            ''
+              PS4=" $ "
+              (
+              set -x
+              mkdir -p $out/share/
+              ln -s $firmwareFiles/lib/firmware/ $out/share/uncompressed-firmware
+              )
+            ''
+        )
+        {
+          # We have to borrow the pre `apply`'d list, thus `options...definitions`.
+          # This is because the firmware is compressed in `apply` on `hardware.firmware`.
+          firmwareFilesList = lib.flatten options.hardware.firmware.definitions;
+        }
+      )
     ];
 
     systemd.services = {
@@ -104,7 +115,9 @@ in
         after = [ "qrtr-ns.service" ];
         serviceConfig = {
           # https://github.com/andersson/rmtfs/blob/7a5ae7e0a57be3e09e0256b51b9075ee6b860322/rmtfs.c#L507-L541
-          ExecStart = "${pkgs.rmtfs}/bin/rmtfs -s -r ${if rmtfsReadsPartition then "-P" else "-o /run/current-system/sw/share/uncompressed-firmware/rmtfs"}";
+          ExecStart = "${pkgs.rmtfs}/bin/rmtfs -s -r ${
+            if rmtfsReadsPartition then "-P" else "-o /run/current-system/sw/share/uncompressed-firmware/rmtfs"
+          }";
           Restart = "always";
           RestartSec = "1";
         };
@@ -139,7 +152,11 @@ in
         requires = [ "rmtfs.service" ];
         before = [ "ModemManager.service" ];
         wantedBy = [ "ModemManager.service" ];
-        path = with pkgs; [ libqmi gawk gnugrep ];
+        path = with pkgs; [
+          libqmi
+          gawk
+          gnugrep
+        ];
         script = ''
           QMICLI_MODEM="qmicli --silent -pd qrtr://0"
           count=0

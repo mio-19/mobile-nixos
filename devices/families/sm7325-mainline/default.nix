@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   imports = [
@@ -23,7 +28,7 @@
   # Even though, we're eagerly adding firmware files that fit.
   # This is a workaround for non-modular kernels wanting to load the adsp firmware during stage-1.
   mobile.boot.stage-1.firmware = [
-    (pkgs.runCommand "initrd-firmware" {} ''
+    (pkgs.runCommand "initrd-firmware" { } ''
       cp -vrf ${config.mobile.device.firmware} $out
       chmod -R +w $out
       # Big file, fills and breaks stage-1
@@ -74,14 +79,16 @@
 
   # Move this to modem module later
   mobile.kernel.structuredConfig = [
-    (helpers: with helpers; {
-      ETHERNET = yes;
-      RMNET = module;
-      CMA_SIZE_SEL_PERCENTAGE = unset;
-      CMA_SIZE_PERCENTAGE = unset;
-      CMA_SIZE_SEL_MBYTES = yes;
-      CMA_SIZE_MBYTES = freeform ''64'';
-    })
+    (
+      helpers: with helpers; {
+        ETHERNET = yes;
+        RMNET = module;
+        CMA_SIZE_SEL_PERCENTAGE = unset;
+        CMA_SIZE_PERCENTAGE = unset;
+        CMA_SIZE_SEL_MBYTES = yes;
+        CMA_SIZE_MBYTES = freeform "64";
+      }
+    )
   ];
 
   boot.kernelParams = lib.mkAfter [

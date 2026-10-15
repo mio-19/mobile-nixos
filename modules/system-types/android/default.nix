@@ -1,4 +1,11 @@
-{ config, pkgs, lib, modules, baseModules, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  modules,
+  baseModules,
+  ...
+}:
 
 let
   enabled = config.mobile.system.type == "android";
@@ -20,7 +27,9 @@ let
     inherit cmdline;
     inherit (config.mobile.outputs) initrd;
     name = "mobile-nixos_${device.name}_${bootimg.name}";
-    kernel = "${kernelPackage}/${if kernelPackage ? file then kernelPackage.file else kernelPackage.target}";
+    kernel = "${kernelPackage}/${
+      if kernelPackage ? file then kernelPackage.file else kernelPackage.target
+    }";
     inherit (config.mobile.system.android) appendDTB header_version dtb;
   };
 
@@ -33,42 +42,53 @@ let
   # either of fastboot or the outputs.
   # This is because this output should have no refs. A simple tarball of this
   # output should be usable even on systems without Nix.
-  android-fastboot-images = pkgs.runCommand "android-fastboot-images-${device.name}" {} ''
+  android-fastboot-images = pkgs.runCommand "android-fastboot-images-${device.name}" { } ''
     mkdir -p $out
     cp -v ${rootfs.imagePath} $out/system.img
     cp -v ${android-bootimg} $out/boot.img
     ${optionalString has_recovery_partition ''
-    cp -v ${android-recovery} $out/recovery.img
+      cp -v ${android-recovery} $out/recovery.img
     ''}
     cat > $out/flash-critical.sh <<'EOF'
     #!/usr/bin/env bash
     dir="$(cd "$(dirname "''${BASH_SOURCE[0]}")"; echo "$PWD")"
     PS4=" $ "
-    ${if has_recovery_partition then ''
-    echo "NOTE: This script flashes the boot and recovery partitions only."
-    '' else ''
-    echo "NOTE: This script flashes the boot partition only."
-    ''}
+    ${
+      if has_recovery_partition then
+        ''
+          echo "NOTE: This script flashes the boot and recovery partitions only."
+        ''
+      else
+        ''
+          echo "NOTE: This script flashes the boot partition only."
+        ''
+    }
     (
     set -x
-    ${if flashingMethod == "fastboot" then ''
-      fastboot flash ${optionalString ab_partitions "--slot=all"} boot "$dir"/boot.img
-      ${optionalString has_recovery_partition ''
-      fastboot flash ${optionalString ab_partitions "--slot=all"} recovery "$dir"/recovery.img
-      ''}
-    ''
-    else if flashingMethod == "odin" then ''
-      heimdall flash \
-        --BOOT "$dir"/boot.img ${optionalString has_recovery_partition ''
-        --RECOVERY "$dir"/recovery.img
-      ''}
-    ''
-    else if flashingMethod == "lk2nd" then ''
-      echo "There is no automated script for flashing with lk2nd yet."
-      echo "Please refer to the installation instructions for your device."
-      exit 1
-    ''
-    else builtins.throw "No flashing method for ${flashingMethod}"})
+    ${
+      if flashingMethod == "fastboot" then
+        ''
+          fastboot flash ${optionalString ab_partitions "--slot=all"} boot "$dir"/boot.img
+          ${optionalString has_recovery_partition ''
+            fastboot flash ${optionalString ab_partitions "--slot=all"} recovery "$dir"/recovery.img
+          ''}
+        ''
+      else if flashingMethod == "odin" then
+        ''
+          heimdall flash \
+            --BOOT "$dir"/boot.img ${optionalString has_recovery_partition ''
+              --RECOVERY "$dir"/recovery.img
+            ''}
+        ''
+      else if flashingMethod == "lk2nd" then
+        ''
+          echo "There is no automated script for flashing with lk2nd yet."
+          echo "Please refer to the installation instructions for your device."
+          exit 1
+        ''
+      else
+        builtins.throw "No flashing method for ${flashingMethod}"
+    })
     echo ""
     echo "Flashing completed."
     echo "The system image needs to be flashed manually to the ${config.mobile.system.android.system_partition_destination} partition."
@@ -76,10 +96,12 @@ let
     chmod +x $out/flash-critical.sh
   '';
 
-  mkBootimgOption = name: lib.mkOption {
-    type = types.str;
-    internal = true;
-  };
+  mkBootimgOption =
+    name:
+    lib.mkOption {
+      type = types.str;
+      internal = true;
+    };
 in
 {
   imports = [
@@ -112,8 +134,8 @@ in
       flashingMethod = lib.mkOption {
         type = types.enum [
           "fastboot" # Default, using `fastboot`
-          "lk2nd"    # Some Qualcomm mainline devices, using fastboot and lk2nd
-          "odin"     # Mainly Samsung, using `heimdall`
+          "lk2nd" # Some Qualcomm mainline devices, using fastboot and lk2nd
+          "odin" # Mainly Samsung, using `heimdall`
         ];
         description = "Configures which flashing method is used by the device.";
         default = "fastboot";
@@ -181,7 +203,14 @@ in
       };
 
       appendDTB = lib.mkOption {
-        type = with types; nullOr (listOf (oneOf [path str]));
+        type =
+          with types;
+          nullOr (
+            listOf (oneOf [
+              path
+              str
+            ])
+          );
         default = null;
         description = "List of dtb files to append to the kernel, when device uses appended DTB.";
       };
@@ -226,7 +255,7 @@ in
           inherit
             android-recovery
             android-fastboot-images
-          ;
+            ;
         };
       };
 
@@ -241,7 +270,8 @@ in
 
       assertions = [
         {
-          assertion = config.mobile.system.android.appendDTB == null || config.mobile.system.android.bootimg.dt == null;
+          assertion =
+            config.mobile.system.android.appendDTB == null || config.mobile.system.android.bootimg.dt == null;
           message = ''
             Device configuration erroneous: `mobile.android.appendDTB` and legacy `bootimg.dt` enabled.
               Tip: enabling `isQcdt` or `isExynosDT` on your kernel is not needed qhen using `appendDTB`.
