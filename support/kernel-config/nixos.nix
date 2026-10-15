@@ -186,7 +186,8 @@ in
       FW_LOADER_COMPRESS = whenAtLeast "5.3" yes;
       FW_LOADER_COMPRESS_ZSTD = whenAtLeast "5.19" yes;
       PREEMPT = no;
-      PREEMPT_VOLUNTARY = yes;
+      PREEMPT_VOLUNTARY = whenOlder "7.0" yes;
+      PREEMPT_LAZY = whenAtLeast "7.0" yes;
       SCHED_SMT = yes;
       SCHED_CORE = whenAtLeast "5.14" yes;
       LRU_GEN = whenAtLeast "6.1"  yes;
