@@ -1,0 +1,184 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Google Pixel Tablet (tangorpro) - Board device tree.
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/soc/samsung,exynos-usi.h>
+#include <dt-bindings/usb/pd.h>
+#include "gs201.dtsi"
+
+/ {
+	model = "Google Pixel Tablet";
+	compatible = "google,gs201-tangorpro", "google,gs201-tangor", "google,gs201";
+
+	/*
+	 * ABL base-DTB match: (product id 0x09855000 | major rev). B0 = 1.
+	 */
+	soc_id = <0x09855001 0x0>;
+
+	aliases {
+		spi0 = &spi_0;
+	};
+
+	chosen {
+		bootargs = "console=tty0 fbcon=font:TER16x32 quiet splash plymouth.force-scale=1 vt.global_cursor_default=0 panic=10 clk_ignore_unused pd_ignore_unused rdinit=/init omamobile.ufs-probe";
+		#address-cells = <2>;
+		#size-cells = <1>;
+		ranges;
+
+		framebuffer0: framebuffer@fac00000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0xfac00000 (1600 * 2560 * 4)>;
+			memory-region = <&cont_splash_mem>;
+			width = <1600>;
+			height = <2560>;
+			stride = <(1600 * 4)>;
+			format = "a8r8g8b8";
+		};
+	};
+
+	battery: battery {
+		compatible = "simple-battery";
+		charge-full-design-microamp-hours = <7020000>;
+		voltage-max-design-microvolt = <4450000>;
+		voltage-min-design-microvolt = <3300000>;
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		pinctrl-0 = <&key_voldown>, <&key_volup>, <&key_power>;
+		pinctrl-names = "default";
+
+		button-vol-down {
+			label = "KEY_VOLUMEDOWN";
+			linux,code = <KEY_VOLUMEDOWN>;
+			gpios = <&gpa10 1 GPIO_ACTIVE_LOW>;
+			wakeup-source;
+		};
+
+		button-vol-up {
+			label = "KEY_VOLUMEUP";
+			linux,code = <KEY_VOLUMEUP>;
+			gpios = <&gpa8 5 GPIO_ACTIVE_LOW>;
+			wakeup-source;
+		};
+
+		button-power {
+			label = "KEY_POWER";
+			linux,code = <KEY_POWER>;
+			gpios = <&gpa10 0 GPIO_ACTIVE_LOW>;
+			wakeup-source;
+		};
+	};
+
+	ufs_0_fixed_vcc_reg: regulator-ufs-vcc {
+		compatible = "regulator-fixed";
+		regulator-name = "ufs-vcc";
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <1>;
+		ranges;
+
+		ramoops@fd3ff000 {
+			compatible = "ramoops";
+			reg = <0x0 0xfd3ff000 0x400000>;
+			console-size = <0x200000>;
+			pmsg-size = <0x200000>;
+		};
+
+		cont_splash_mem: splash@fac00000 {
+			reg = <0x0 0xfac00000 (1600 * 2560 * 4)>;
+			no-map;
+		};
+	};
+};
+
+&cmu_dpu {
+	status = "okay";
+};
+
+&cmu_disp {
+	status = "okay";
+};
+
+&gpu {
+	status = "okay";
+};
+
+&usbdrd31_phy {
+	status = "okay";
+};
+
+&usb_dwc3 {
+	status = "okay";
+};
+
+&ufs_0 {
+	vcc-supply = <&ufs_0_fixed_vcc_reg>;
+	status = "okay";
+};
+
+&ufs_0_phy {
+	status = "okay";
+};
+
+&usi13 {
+	samsung,mode = <USI_MODE_I2C>;
+	status = "okay";
+};
+
+&hsi2c_13 {
+	clock-frequency = <400000>;
+	status = "okay";
+
+	fuel-gauge@36 {
+		compatible = "maxim,max77759-fg";
+		reg = <0x36>;
+		interrupts-extended = <&gpa9 3 IRQ_TYPE_LEVEL_LOW>;
+		pinctrl-0 = <&if_pmic_fg_int>;
+		pinctrl-names = "default";
+		shunt-resistor-micro-ohms = <5000>;
+		monitored-battery = <&battery>;
+	};
+
+	pmic@66 {
+		compatible = "maxim,max77759";
+		reg = <0x66>;
+		interrupts-extended = <&gpa9 4 IRQ_TYPE_LEVEL_LOW>;
+		pinctrl-0 = <&if_pmic_int>;
+		pinctrl-names = "default";
+		interrupt-controller;
+		#interrupt-cells = <2>;
+
+		gpio {
+			compatible = "maxim,max77759-gpio";
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+		};
+	};
+};
+
+&pinctrl_gpio_alive {
+	if_pmic_fg_int: if-pmic-fg-int-pins {
+		samsung,pins = "gpa9-3";
+		samsung,pin-function = <GS101_PIN_FUNC_EINT>;
+		samsung,pin-pud = <GS101_PIN_PULL_UP>;
+		samsung,pin-drv = <GS101_PIN_DRV_2_5_MA>;
+	};
+
+	if_pmic_int: if-pmic-int-pins {
+		samsung,pins = "gpa9-4";
+		samsung,pin-function = <GS101_PIN_FUNC_EINT>;
+		samsung,pin-pud = <GS101_PIN_PULL_UP>;
+		samsung,pin-drv = <GS101_PIN_DRV_2_5_MA>;
+	};
+};

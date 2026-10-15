@@ -1,0 +1,65 @@
+= Google Pixel Tablet
+include::_support/common.inc[]
+
+== Device-specific notes
+
+=== Best-effort support
+
+This is a best-effort port for the Google Pixel Tablet (`tangorpro`), powered by
+the Google Tensor G2 (`gs201`) SoC, 8 GiB of LPDDR5 RAM and a 10.95" 2560 by 1600
+LCD display (16:10 aspect ratio).
+
+The port uses the `google-gs201` family architecture:
+mainline Linux 7.3 (`linux-omarchy-mobile` with GS201 support), `uniLoader` with
+Android boot image header version 4, and redistributable firmware from `linux-firmware`.
+
+Hardware peripheral overview:
+
+* *SoC*: Google Tensor G2 (`gs201`), 2x Cortex-X1 @ 2.85 GHz, 2x Cortex-A78 @ 2.35 GHz, 4x Cortex-A55 @ 1.80 GHz.
+* *GPU*: Mali-G710 MP7 (supported by Panfrost / Panthor drivers).
+* *Display*: 2560x1600 60Hz LCD panel (BOE `ts110f5mlg0` or CSOT `ppa957db2d`), with simple-framebuffer handoff from the bootloader.
+* *Audio*: 4-speaker array driven by Cirrus Logic CS35L41 amplifiers over SPI.
+* *Touch*: Novatek `nvt_touch` over I2C/SPI with Google `touch_bus_negotiator`.
+* *Power & Battery*: MAX77759 companion PMIC / charger, MAX1720x / MAX77759 fuel gauge, ~27 Wh (7020 mAh) battery.
+* *Dock*: Google Pogo 4-pin speaker dock transport (`google_dock` / `pogo_transport`).
+* *Wireless*: Broadcom BCM4389 Wi-Fi 6E (802.11ax) and Bluetooth 5.2.
+
+=== Boot images
+
+The stock bootloader uses Android boot image header version 4 with A/B slotting.
+The image embeds the mainline kernel, the `gs201-tangorpro.dtb` device tree and
+the Mobile NixOS initrd in
+https://github.com/Trijal08/uniLoader[uniLoader], which provides the early boot
+environment expected by the kernel.
+
+Build a boot image for initial testing with:
+
+----
+$ nix-build examples/hello --argstr device google-tangorpro -A outputs.android-bootimg
+----
+
+[WARNING]
+====
+Unlocking the bootloader wipes all user data. Back up your data first and keep
+the https://developers.google.com/android/images#tangorpro[Google factory images]
+available for recovery. Do not relock the bootloader while using custom images.
+====
+
+To boot the image:
+
+1. Enable *OEM unlocking* and *USB debugging* in Android Developer Options.
+2. Enter fastboot mode by rebooting with `adb reboot bootloader`, or by holding Volume Down + Power while powering on.
+3. Unlock the bootloader if not already unlocked: `fastboot flashing unlock` and confirm on-screen.
+4. Test boot the image temporarily without flashing:
+
+----
+$ fastboot boot result
+----
+
+=== Firmware
+
+`mobile.device.firmware` bundles redistributable firmware from `linux-firmware`
+(Cirrus, Broadcom, and Exynos trees). Board-specific speaker calibration blobs
+(`cirrus/cs35l41-dsp1-spk-prot-tangorpro*.wmfw`), BCM4389 Wi-Fi NVRAM files, and
+AoC firmware can be extracted from the stock Android vendor dump and placed in
+`/lib/firmware/` via a package overlay.

@@ -1,10 +1,21 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  inherit (lib) mkMerge mkOption mkIf types;
+  inherit (lib)
+    mkMerge
+    mkOption
+    mkIf
+    types
+    ;
   cfg = config.mobile.hardware.socs;
   anyExynos = lib.any (v: v) [
     cfg.exynos-7880.enable
+    cfg.google-tensor-g2.enable
     cfg.google-tensor-g4.enable
   ];
 in
@@ -14,6 +25,11 @@ in
       type = types.bool;
       default = false;
       description = "enable when SOC is Exynos 7880";
+    };
+    hardware.socs.google-tensor-g2.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable when SOC is Google Tensor G2 (gs201)";
     };
     hardware.socs.google-tensor-g4.enable = mkOption {
       type = types.bool;
@@ -30,13 +46,17 @@ in
       };
     }
     {
-      mobile.system.system = mkIf cfg.google-tensor-g4.enable "aarch64-linux";
+      mobile.system.system = mkIf (
+        cfg.google-tensor-g2.enable || cfg.google-tensor-g4.enable
+      ) "aarch64-linux";
     }
     (mkIf anyExynos {
       mobile.kernel.structuredConfig = [
-        (helpers: with helpers; {
-          ARCH_EXYNOS = lib.mkDefault yes;
-        })
+        (
+          helpers: with helpers; {
+            ARCH_EXYNOS = lib.mkDefault yes;
+          }
+        )
       ];
     })
   ];
