@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   enabled = config.filesystem == "btrfs";
@@ -9,10 +14,10 @@ let
     mkOption
     optionalString
     types
-  ;
+    ;
 
   inherit (config) label;
-  inherit (config.btrfs) partitionID;
+  inherit (config.btrfs) partitionID compression;
 in
 {
   options.btrfs = {
@@ -22,6 +27,19 @@ in
       default = null;
       description = ''
         Volume ID of the filesystem.
+      '';
+    };
+
+    compression = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      example = "zstd";
+      description = ''
+        Compression passed to `mkfs.btrfs --compress` when the image is
+        populated with `-r`.
+
+        Examples: `zstd`, `zstd:3`, `lzo`, `zlib`, `zlib:9`.
+        Leave unset to store extents uncompressed.
       '';
     };
   };
@@ -40,13 +58,17 @@ in
       # Rounded up to 110MiB.
       minimumSize = config.helpers.size.MiB 110;
 
+      # Metadata and chunk overhead on top of the file payload.
+      # `--shrink` trims the unused tail after mkfs.
       computeMinimalSize = ''
+        size=$(( size + size / 8 + ${toString (config.helpers.size.MiB 64)} ))
       '';
 
       buildPhases = {
         copyPhase = ''
           mkfs.btrfs \
             -r . \
+            ${optionalString (compression != null) "--compress ${escapeShellArg compression}"} \
             ${optionalString (partitionID != null) "-U ${partitionID}"} \
             ${optionalString (label != null) "-L ${escapeShellArg label}"} \
             ${optionalString (config.size == null) "--shrink"} \

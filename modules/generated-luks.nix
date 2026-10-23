@@ -104,10 +104,15 @@ in
     # `fileSystems` submodule defaults (`fsType` would be left undefined).
     # Priority 900 wins over the rootfs module's `mkDefault` (1000), but a
     # normal user definition still wins over this.
-    fileSystems."/" = lib.mkOverride 900 {
-      device = "/dev/mapper/LUKS-MOBILE-ROOTFS";
-      fsType = "ext4";
-      autoResize = true;
-    };
+    fileSystems."/" = lib.mkOverride 900 (
+      {
+        device = "/dev/mapper/LUKS-MOBILE-ROOTFS";
+        fsType = rootfs.filesystem;
+        autoResize = true;
+      }
+      // lib.optionalAttrs (rootfs.filesystem == "btrfs" && rootfs.btrfs.compression != null) {
+        options = [ "compress=${rootfs.btrfs.compression}" ];
+      }
+    );
   };
 }

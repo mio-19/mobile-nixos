@@ -1,9 +1,10 @@
-{ stdenv
-, fetchFromGitHub
-, libconfig
-, libusbgx
-, cmake
-, pkg-config
+{
+  stdenv,
+  fetchFromGitHub,
+  libconfig,
+  libusbgx,
+  cmake,
+  pkg-config,
 }:
 
 stdenv.mkDerivation rec {
@@ -12,6 +13,10 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [
     cmake
     pkg-config
+  ];
+  # CMake 4 dropped compatibility with cmake_minimum_required() < 3.5.
+  cmakeFlags = [
+    "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
   ];
   buildInputs = [
     libconfig

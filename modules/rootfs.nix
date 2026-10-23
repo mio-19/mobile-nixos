@@ -1,12 +1,25 @@
-# This provides `build.rootfs`, which is the rootfs image (ext4) built from
-# the current configuration.
-{ config, lib, pkgs, ... }:
+# This provides `build.rootfs`, the rootfs image built from the current
+# configuration. The filesystem type follows `mobile.generatedFilesystems.rootfs`.
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  inherit (lib) mkIf mkOption optionalString types;
+  inherit (lib)
+    mkIf
+    mkOption
+    optionalString
+    types
+    ;
   inherit (config.mobile._internal) compressLargeArtifacts;
   inherit (pkgs) buildPackages;
-  rootfsLabel = config.mobile.generatedFilesystems.rootfs.label;
+  generatedRootfs = config.mobile.generatedFilesystems.rootfs;
+  rootfsLabel = generatedRootfs.label;
+  rootfsFilesystem = generatedRootfs.filesystem;
+  btrfsCompression = generatedRootfs.btrfs.compression;
 in
 {
   options = {
@@ -42,32 +55,32 @@ in
       ext4.partitionID = "44444444-4444-4444-8888-888888888888";
 
       populateCommands =
-      let
-        closureInfo = pkgs.buildPackages.closureInfo { rootPaths = config.system.build.toplevel; };
-      in
-      ''
-        mkdir -p ./nix/store
-        echo "Copying system closure..."
+        let
+          closureInfo = pkgs.buildPackages.closureInfo { rootPaths = config.system.build.toplevel; };
+        in
+        ''
+          mkdir -p ./nix/store
+          echo "Copying system closure..."
 
-        err=0
-        while IFS= read -r path; do
-          echo "  Copying $path"
-          if test -e "$path"; then
-            cp -prf "$path" ./nix/store
-          else
-            2>&1 printf "ERROR: path %q does not exist...\n" "$path"
-            (( ++err ))
+          err=0
+          while IFS= read -r path; do
+            echo "  Copying $path"
+            if test -e "$path"; then
+              cp -prf "$path" ./nix/store
+            else
+              2>&1 printf "ERROR: path %q does not exist...\n" "$path"
+              (( ++err ))
+            fi
+          done < "${closureInfo}/store-paths"
+
+          if (( err > 0 )); then
+            2>&1 printf "... Bailing out, %d errors.\n" "$err"
+            exit 2
           fi
-        done < "${closureInfo}/store-paths"
 
-        if (( err > 0 )); then
-          2>&1 printf "... Bailing out, %d errors.\n" "$err"
-          exit 2
-        fi
-
-        echo "Done copying system closure..."
-        cp -v ${closureInfo}/registration ./nix-path-registration
-      '';
+          echo "Done copying system closure..."
+          cp -v ${closureInfo}/registration ./nix-path-registration
+        '';
 
       # Give some headroom for initial mounting.
       extraPadding = pkgs.image-builder.helpers.size.MiB 20;
@@ -77,24 +90,26 @@ in
       # FIXME: See #117, move compression into the image builder.
       # Zstd can take a long time to complete successfully at high compression
       # levels. Increasing the compression level could lead to timeouts.
-      additionalCommands = optionalString compressLargeArtifacts ''
-        echo ":: Compressing rootfs image"
-        (PS4=" $ "; set -x
-        cd $out_path
-        # Hacky, but the img path here already has .zst appended.
-        # Let's rename it (we assume rootfs.img) and do the compression here.
-        mv "$img" "rootfs.img"
-        time ${buildPackages.zstd}/bin/zstd -10 --rm "rootfs.img"
-        )
-      '' + ''
-        echo ":: Adding hydra-build-products"
-        (PS4=" $ "; set -x
-        mkdir -p $out_path/nix-support
-        cat <<EOF > $out_path/nix-support/hydra-build-products
-        file rootfs${optionalString compressLargeArtifacts "-zstd"} $img
-        EOF
-        )
-      '';
+      additionalCommands =
+        optionalString compressLargeArtifacts ''
+          echo ":: Compressing rootfs image"
+          (PS4=" $ "; set -x
+          cd $out_path
+          # Hacky, but the img path here already has .zst appended.
+          # Let's rename it (we assume rootfs.img) and do the compression here.
+          mv "$img" "rootfs.img"
+          time ${buildPackages.zstd}/bin/zstd -10 --rm "rootfs.img"
+          )
+        ''
+        + ''
+          echo ":: Adding hydra-build-products"
+          (PS4=" $ "; set -x
+          mkdir -p $out_path/nix-support
+          cat <<EOF > $out_path/nix-support/hydra-build-products
+          file rootfs${optionalString compressLargeArtifacts "-zstd"} $img
+          EOF
+          )
+        '';
     };
 
     boot.postBootCommands = mkIf (config.mobile.rootfs.rehydrateStore) ''
@@ -113,11 +128,16 @@ in
     '';
 
     fileSystems = {
-      "/" = lib.mkDefault {
-        device = "/dev/disk/by-label/${rootfsLabel}";
-        fsType = "ext4";
-        autoResize = true;
-      };
+      "/" = lib.mkDefault (
+        {
+          device = "/dev/disk/by-label/${rootfsLabel}";
+          fsType = rootfsFilesystem;
+          autoResize = true;
+        }
+        // lib.optionalAttrs (rootfsFilesystem == "btrfs" && btrfsCompression != null) {
+          options = [ "compress=${btrfsCompression}" ];
+        }
+      );
     };
 
     # FIXME: Move this in a proper module + task for the filesystem.
