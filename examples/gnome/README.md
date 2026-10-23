@@ -2,8 +2,9 @@ GNOME with a zstd-compressed btrfs root inside LUKS. The build-time passphrase
 and the user password are both `1234`. Change the LUKS passphrase on the device
 after the first boot (`cryptsetup luksChangeKey`).
 
-GNOME is not part of the cross-compilation canaries. Building it for another
-architecture needs further nixpkgs workarounds.
+GNOME is not part of the cross-compilation canaries. `cross.nix` holds the
+nixpkgs fixes for this closure and applies them only when the build platform
+and the device platform differ.
 
 ## Building
 

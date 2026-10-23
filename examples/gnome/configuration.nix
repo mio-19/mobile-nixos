@@ -15,6 +15,7 @@ in
 {
   imports = [
     ../common-configuration.nix
+    ./cross.nix
   ];
 
   documentation.enable = false;
