@@ -78,7 +78,12 @@ in
   # All that follows will have to be cleaned and then upstreamed.
   #
 
-  # No such fixes as of now, this comment is merely a placeholder to keep the general structure.
+  # Tests.test_wacom_dongle aborts when uevent sendmsg returns EAGAIN
+  # under load. The daemon is unchanged. Phosh links upower, and GNOME
+  # pulls it in too.
+  upower = super.upower.overrideAttrs (_old: {
+    doCheck = false;
+  });
 
   # Things specific to mobile-nixos.
   # Not necessarily internals, but they probably won't go into <nixpkgs>.
