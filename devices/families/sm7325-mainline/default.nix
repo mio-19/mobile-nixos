@@ -32,10 +32,16 @@
       cp -vrf ${config.mobile.device.firmware} $out
       chmod -R +w $out
       # Big file, fills and breaks stage-1
-      find $out/lib/firmware/qcom/sm7325/ -name "modem.mbn" -type f -delete
+      find $out/lib/firmware/qcom -name "modem.mbn" -delete
+      if [ -d $out/lib/firmware/qcom/sm7225/fairphone4 ]; then
+        rm -f $out/lib/firmware/qcom/sm7225/fairphone4/modem.*
+        rm -rf $out/lib/firmware/qcom/sm7225/fairphone4/modem_pr
+      fi
 
-      # Copy extra a660 firmware from linux-firmware for the Adreno 642L? see PMOS
-      cp -vf ${pkgs.linux-firmware}/lib/firmware/qcom/{a660_sqe.fw,a660_gmu.bin} $out/lib/firmware/qcom
+      # The SM7325 devices in this family use the Adreno 642L.
+      ${lib.optionalString (config.mobile.hardware.soc == "qualcomm-sm7325") ''
+        cp -vf ${pkgs.linux-firmware}/lib/firmware/qcom/{a660_sqe.fw,a660_gmu.bin} $out/lib/firmware/qcom
+      ''}
 
       # Copy extra ath11k firmware from linux-firmware, see PMOS
       cp -vrf ${pkgs.linux-firmware}/lib/firmware/ath11k $out/lib/firmware/ath11k
@@ -75,7 +81,7 @@
     rndis = "rndis.usb0";
   };
 
-  mobile.quirks.qualcomm.sm7325-modem.enable = true;
+  mobile.quirks.qualcomm.sm7325-modem.enable = lib.mkDefault true;
 
   # Move this to modem module later
   mobile.kernel.structuredConfig = [
@@ -87,6 +93,8 @@
         CMA_SIZE_PERCENTAGE = unset;
         CMA_SIZE_SEL_MBYTES = yes;
         CMA_SIZE_MBYTES = freeform "64";
+        PINCTRL_SM6350 = yes;
+        INTERCONNECT_QCOM_SM6350 = yes;
       }
     )
   ];

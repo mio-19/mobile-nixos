@@ -19,6 +19,7 @@ let
   anyCompatible = any id [
     cfg.sdm845-modem.enable
     cfg.sc7180-modem.enable
+    cfg.sm6350-modem.enable
     cfg.sm7325-modem.enable
   ];
 
@@ -27,6 +28,7 @@ let
   # Once we have more accrued knowledge, add a discrete option.
   rmtfsReadsPartition = any id [
     cfg.sdm845-modem.enable
+    cfg.sm6350-modem.enable
     cfg.sm7325-modem.enable
   ];
 
@@ -34,6 +36,7 @@ let
   # is it USB PD or something modem related?
   withPDMapper = any id [
     cfg.sdm845-modem.enable
+    cfg.sm6350-modem.enable
     cfg.sm7325-modem.enable
   ];
 in
@@ -51,6 +54,13 @@ in
       default = false;
       description = ''
         Enable this on a mainline-based SM7325 device for modem support
+      '';
+    };
+    quirks.qualcomm.sm6350-modem.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Enable this on a mainline-based SM6350/SM7225 device for modem support.
       '';
     };
     quirks.qualcomm.sdm845-modem.enable = mkOption {
@@ -88,6 +98,7 @@ in
                 ]
                 ++ optional cfg.sdm845-modem.enable "/lib/firmware/qcom/sdm845"
                 ++ optional cfg.sc7180-modem.enable "/lib/firmware/qcom/sc7180-trogdor"
+                ++ optional cfg.sm6350-modem.enable "/lib/firmware/qcom/sm7225/fairphone4"
                 ++ optional cfg.sm7325-modem.enable "/lib/firmware/qcom/sm7325";
               };
             }

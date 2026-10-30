@@ -4,12 +4,11 @@ The Fairphone 4 (FP4) is a Qualcomm Snapdragon 750G (SM7225) device with a
 1080x2340 display and 6 or 8 GiB RAM. Its upstream device tree is
 `sm7225-fairphone-fp4`.
 
-This initial Mobile NixOS port uses the shared SM7325 mainline configuration
-and is best-effort. The Fairphone 4 kernel and firmware support is incomplete;
-device-specific firmware, an SM6350/SM7225 kernel configuration, and
-additional peripheral tuning are needed before this should be considered a
-complete device port. The firmware placeholder only satisfies the shared
-family's expected directory layout; it does not provide FP4 firmware blobs.
+This best-effort Mobile NixOS port uses the shared Qualcomm mainline kernel
+configuration, the FP4 device tree, SM6350-family pinctrl and interconnect
+drivers, and redistributable FP4 firmware from
+[FairBlobs/FP4-firmware](https://github.com/FairBlobs/FP4-firmware). Audio,
+camera, and other peripheral support still need testing and tuning on hardware.
 
 == Build
 

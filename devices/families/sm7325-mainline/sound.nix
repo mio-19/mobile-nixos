@@ -1,6 +1,11 @@
-{ pkgs, ... }:
-
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
+lib.mkIf (config.mobile.device.name == "nothing-spacewar") {
   nixpkgs.overlays = [
     (self: super: {
       sc7280-alsa-ucm = self.callPackage (
