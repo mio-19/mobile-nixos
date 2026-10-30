@@ -24,6 +24,7 @@ been tested on an FP4.
 
 Update the phone to the latest official firmware and unlock the bootloader
 using [Fairphone's instructions](https://support.fairphone.com/hc/en-us/articles/10492476238865).
+Unlocking the critical partitions is not required.
 The [Nura FP4 page](https://wiki.nura.eco/wiki/Fairphone_4_(fairphone-fp4))
 documents boot modes and manual installation. Its userdata installation path
 corresponds to these commands:

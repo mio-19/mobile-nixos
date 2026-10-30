@@ -8,6 +8,7 @@
 {
   imports = [
     ../families/sm7325-mainline
+    ./sound.nix
   ];
 
   mobile.device.name = "fairphone-fp4";
@@ -32,6 +33,12 @@
   mobile.system.android.dtb = lib.mkForce "dtbs/qcom/sm7225-fairphone-fp4.dtb";
   mobile.system.android.device_name = "FP4";
 
+  # Match the modules Nura loads in its initramfs for the display.
+  mobile.boot.stage-1.kernel.modules = [
+    "msm"
+    "panel-himax-hx83112a"
+  ];
+
   # The shared family defaults this modem quirk on for SM7325 devices.
   mobile.quirks.qualcomm.sm7325-modem.enable = lib.mkForce false;
   mobile.quirks.qualcomm.sm6350-modem.enable = true;
@@ -49,4 +56,13 @@
   mobile.device.firmware = pkgs.callPackage ./firmware { };
   mobile.quirks.qualcomm.hexagonrpc.enable = true;
   mobile.quirks.qualcomm.hexagonrpc.firmware = config.mobile.device.firmware;
+  mobile.quirks.audio.alsa-ucm-meld = true;
+  environment.systemPackages = [ pkgs.fairphone-fp4-alsa-ucm ];
+
+  services.udev.extraRules = lib.mkAfter ''
+    # The FP4's accelerometer is mounted upside down relative to screen axes.
+    SUBSYSTEM=="misc", KERNEL=="fastrpc-*", ENV{ACCEL_MOUNT_MATRIX}+="-1, 0, 0; 0, -1, 0; 0, 0, 1"
+    SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT}=="1", SUBSYSTEMS=="input", ATTRS{name}=="aw8695-haptics", TAG+="uaccess", ENV{FEEDBACKD_TYPE}="vibra"
+  '';
+
 }

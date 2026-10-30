@@ -93,6 +93,7 @@
         CMA_SIZE_PERCENTAGE = unset;
         CMA_SIZE_SEL_MBYTES = yes;
         CMA_SIZE_MBYTES = freeform "64";
+        DRM_PANEL_HIMAX_HX83112A = module;
         PINCTRL_SM6350 = yes;
         INTERCONNECT_QCOM_SM6350 = yes;
       }
