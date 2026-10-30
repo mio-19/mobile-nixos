@@ -1,0 +1,40 @@
+= Fairphone 4 (fairphone-fp4)
+
+The Fairphone 4 (FP4) is a Qualcomm Snapdragon 750G (SM7225) device with a
+1080x2340 display and 6 or 8 GiB RAM. Its upstream device tree is
+`sm7225-fairphone-fp4`.
+
+This initial Mobile NixOS port uses the shared SM7325 mainline configuration
+and is best-effort. The Fairphone 4 kernel and firmware support is incomplete;
+device-specific firmware, an SM6350/SM7225 kernel configuration, and
+additional peripheral tuning are needed before this should be considered a
+complete device port. The firmware placeholder only satisfies the shared
+family's expected directory layout; it does not provide FP4 firmware blobs.
+
+== Build
+
+Build the example image from the repository root:
+
+ $ nix-build examples/hello --argstr device fairphone-fp4 -A outputs.android-fastboot-images
+
+This produces `result/boot.img` and `result/system.img` with the standard
+Android fastboot helper script. The image has been build-checked, but has not
+been tested on an FP4.
+
+== Installation
+
+Update the phone to the latest official firmware and unlock the bootloader
+using [Fairphone's instructions](https://support.fairphone.com/hc/en-us/articles/10492476238865).
+The [Nura FP4 page](https://wiki.nura.eco/wiki/Fairphone_4_(fairphone-fp4))
+documents boot modes and manual installation. Its userdata installation path
+corresponds to these commands:
+
+ $ fastboot flash boot result/boot.img
+ $ fastboot flash userdata result/system.img
+ $ fastboot erase dtbo
+ $ fastboot reboot
+
+Use fastboot mode by powering off, then holding Volume Down while connecting
+USB. The Nura instructions recommend erasing `dtbo` after flashing. This
+build's image has not been validated on-device, and peripheral support remains
+incomplete.
