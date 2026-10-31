@@ -9,6 +9,7 @@ configuration, the FP4 device tree, SM6350-family pinctrl and interconnect
 drivers, and redistributable FP4 firmware from
 [FairBlobs/FP4-firmware](https://github.com/FairBlobs/FP4-firmware). Audio,
 camera, and other peripheral support still need testing and tuning on hardware.
+It uses the SM6350/SM7225 kernel fork's 7.2.0 release, like Nura.
 
 == Build
 
@@ -26,13 +27,48 @@ Update the phone to the latest official firmware and unlock the bootloader
 using [Fairphone's instructions](https://support.fairphone.com/hc/en-us/articles/10492476238865).
 Unlocking the critical partitions is not required.
 The [Nura FP4 page](https://wiki.nura.eco/wiki/Fairphone_4_(fairphone-fp4))
-documents boot modes and manual installation. Its userdata installation path
-corresponds to these commands:
+documents boot modes and manual installation. This image's userdata installation
+path corresponds to these commands:
 
+ $ fastboot set_active b
  $ fastboot flash boot result/boot.img
  $ fastboot flash userdata result/system.img
  $ fastboot erase dtbo
  $ fastboot reboot
+
+The fastboot helper flashes only the active boot slot. For dual boot, keep
+Android in slot A and use a microSD card for the Mobile NixOS root filesystem.
+Build that filesystem separately:
+
+ $ nix-build examples/hello \
+     --argstr device fairphone-fp4 \
+     -A outputs.generatedFilesystems.rootfs \
+     -o result-rootfs
+
+Write `result-rootfs/rootfs.img` directly to an ext4 partition on the microSD
+card. The example image carries the `MOBILE_HELLO` filesystem label expected by
+the initrd.
+In fastboot mode, select slot B and install the boot image from `result/` there:
+
+ $ fastboot set_active b
+ $ fastboot erase dtbo
+ $ fastboot flash boot result/boot.img
+ $ fastboot reboot
+
+Do not flash `system.img` to userdata for this setup: userdata is shared with
+Android and that installation path replaces its contents. The Nura instructions
+describe the same slot B plus microSD approach.
+
+`qbootctl` is included in Mobile NixOS and marks the current slot successful
+after reaching `multi-user.target`. Switch the next boot to Android or Mobile
+NixOS with:
+
+ $ sudo qbootctl -s a
+ $ sudo qbootctl -s b
+
+Use `qbootctl -c` to check the current slot. Nura warns that a report exists of
+`qbootctl` corrupting the partition table and bricking an FP4; use slot switching
+with care.
 
 Use fastboot mode by powering off, then holding Volume Down while connecting
 USB. The Nura instructions recommend erasing `dtbo` after flashing. This
